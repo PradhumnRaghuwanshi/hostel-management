@@ -1,4 +1,3 @@
-// AdminLayout.jsx
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
@@ -10,7 +9,7 @@ export default function AdminLayout({ title, children }) {
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <div
-        className={`fixed z-40 top-0 left-0 h-full w-72 transition-transform duration-300 bg-white shadow-lg md:relative md:translate-x-0 ${
+        className={`fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-lg transition-transform duration-300 md:relative md:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -46,8 +45,8 @@ export default function AdminLayout({ title, children }) {
           <h1 className="text-2xl font-bold text-blue-800 mb-4">{title}</h1>
         </div>
 
-        {/* Page Content with gradient and transition */}
-        <main className="bg-gradient-to-br from-white via-slate-100 to-blue-50 transition-all duration-300 ease-in-out hover:brightness-100 px-4 sm:px-6 md:px-6 lg:px-8 pb-8">
+        {/* Page Content - remove hover animation that causes flicker */}
+        <main className="bg-gradient-to-br from-white via-slate-100 to-blue-50 px-4 sm:px-6 md:px-6 lg:px-8 pb-8">
           {children}
         </main>
       </div>
