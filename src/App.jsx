@@ -12,6 +12,7 @@ import UtilityBillPage from './pages/Admin/UtilityBillPage'
 import NoticesPage from './pages/Admin/NoticesPage'
 import Settings from './pages/Admin/Settings'
 import MessManagementPage from './pages/Admin/MessManagementPage'
+import StudentComplaints from './pages/Student/StudentComplaints'
 
 
 
@@ -34,6 +35,7 @@ function App() {
         <Route path="/Mess" element={<MessManagementPage />} />
         <Route path="/Notices" element={<NoticesPage />} />
         <Route path="/Settings" element={<Settings/>} />
+        <Route path="/Studentcomplaints" element={<StudentComplaints/>} />
       </Routes>
     </BrowserRouter>
   )

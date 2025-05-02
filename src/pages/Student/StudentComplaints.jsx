@@ -1,145 +1,137 @@
-import React, { useState } from "react";
-import { ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, PlusCircleIcon } from "@heroicons/react/24/solid";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import AdminLayout from "../../components/admin/AdminLayout";
 
-const initialComplaints = [
-  {
-    id: 1,
-    subject: "No water in bathroom",
-    description: "There is no water supply since yesterday night.",
-    date: "2024-04-24",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    subject: "AC not working",
-    description: "The AC in my room is not cooling at all.",
-    date: "2024-04-21",
-    status: "Resolved",
-  },
-];
+export default function AdminComplaintPage() {
+  const [complaints, setComplaints] = useState([]);
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
 
-const statusBadge = (status) => {
-  if (status === "Pending")
-    return (
-      <span className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-700/20 text-yellow-700 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-bold">
-        <ExclamationTriangleIcon className="h-4 w-4" /> Pending
-      </span>
-    );
-  if (status === "Resolved")
-    return (
-      <span className="flex items-center gap-1 bg-green-100 dark:bg-green-700/20 text-green-700 dark:text-green-200 px-2 py-1 rounded-full text-xs font-bold">
-        <CheckCircleIcon className="h-4 w-4" /> Resolved
-      </span>
-    );
-  return (
-    <span className="flex items-center gap-1 bg-red-100 dark:bg-red-700/20 text-red-600 dark:text-red-200 px-2 py-1 rounded-full text-xs font-bold">
-      <XCircleIcon className="h-4 w-4" /> Rejected
-    </span>
-  );
-};
-
-export default function StudentComplaints() {
-  const [complaints, setComplaints] = useState(initialComplaints);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ subject: "", description: "" });
-
-  // Add new complaint handler (demo)
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.subject.trim() || !form.description.trim()) return;
-    setComplaints([
-      {
-        id: complaints.length + 1,
-        subject: form.subject,
-        description: form.description,
-        date: new Date().toISOString().slice(0, 10),
-        status: "Pending",
-      },
-      ...complaints,
-    ]);
-    setShowForm(false);
-    setForm({ subject: "", description: "" });
+  const fetchComplaints = async () => {
+    try {
+      const res = await axios.get("https://hostel-management-backend-qyvz.onrender.com/complaint");
+      setComplaints(Array.isArray(res.data.data) ? res.data.data : []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
   };
 
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+
+  const handleResolve = async (id) => {
+    try {
+      const resolvedAt = new Date();
+
+      await axios.put(`https://hostel-management-backend-qyvz.onrender.com/complaint/${id}`, {
+        status: "resolved",
+        resolvedAt,
+      });
+
+      // Update UI
+      setComplaints((prev) =>
+        prev.map((c) =>
+          c._id === id ? { ...c, status: "resolved", resolvedAt: resolvedAt.toISOString() } : c
+        )
+      );
+
+      setSelectedComplaint(null);
+    } catch (err) {
+      console.error("Resolve error:", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this complaint?")) return;
+    try {
+      await axios.delete(`https://hostel-management-backend-qyvz.onrender.com/complaint/${id}`);
+      setComplaints((prev) => prev.filter((c) => c._id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
+  const grouped = complaints.reduce((acc, c) => {
+    const status = c.status || "pending";
+    acc[status] = acc[status] || [];
+    acc[status].push(c);
+    return acc;
+  }, {});
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-950 py-10 px-2">
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <ExclamationTriangleIcon className="h-8 w-8 text-yellow-500" />
-          <h2 className="text-2xl font-bold text-blue-800 dark:text-blue-200">My Complaints</h2>
-        </div>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">Raise hostel issues, track complaint status and history.</p>
-        
-        {/* New Complaint Button */}
-        <button
-          className="mb-7 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold shadow"
-          onClick={() => setShowForm((prev) => !prev)}
-        >
-          <PlusCircleIcon className="h-5 w-5" />
-          New Complaint
-        </button>
-
-        {/* Complaint Form */}
-        {showForm && (
-          <form onSubmit={handleSubmit} className="mb-8 bg-blue-50 dark:bg-gray-800 rounded-xl p-5">
-            <div className="mb-3">
-              <label className="block mb-1 text-gray-800 dark:text-gray-200 font-semibold">Subject</label>
-              <input
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                value={form.subject}
-                maxLength={80}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                placeholder="What is the issue?"
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label className="block mb-1 text-gray-800 dark:text-gray-200 font-semibold">Description</label>
-              <textarea
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-                value={form.description}
-                maxLength={300}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Describe the problem in detail"
-                rows={3}
-                required
-              ></textarea>
-            </div>
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded shadow">
-              Submit
-            </button>
-          </form>
-        )}
-
-        {/* Complaints List */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left bg-white dark:bg-gray-900 rounded-xl shadow">
-            <thead className="bg-gray-100 dark:bg-gray-800">
-              <tr>
-                <th className="p-3">Date</th>
-                <th className="p-3">Subject</th>
-                <th className="p-3">Description</th>
-                <th className="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {complaints.map((c) => (
-                <tr key={c.id} className="border-b border-gray-100 dark:border-gray-800">
-                  <td className="p-3 text-gray-600 dark:text-gray-300">{c.date}</td>
-                  <td className="p-3 font-bold text-blue-800 dark:text-blue-300">{c.subject}</td>
-                  <td className="p-3 text-gray-800 dark:text-gray-100">{c.description}</td>
-                  <td className="p-3">{statusBadge(c.status)}</td>
-                </tr>
+    <AdminLayout title="Manage Complaints">
+      <div className="p-6 space-y-12">
+        {["pending", "resolved"].map((status) => (
+          <div key={status}>
+            <h2 className="text-xl font-bold capitalize mb-4">{status} Complaints</h2>
+            <div className="grid gap-4">
+              {(grouped[status] || []).map((c) => (
+                <div key={c._id} className="border p-4 rounded shadow bg-white">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-blue-800">{c.title || "Untitled"}</h3>
+                    <span className="text-sm text-gray-500">
+                      {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 mb-1">{c.description}</p>
+                  <p className="text-sm text-gray-600">
+                    Student: {c.studentName || "N/A"} ({c.student || "no-id"}) | Room: {c.roomNumber || "N/A"}
+                  </p>
+                  {c.resolvedAt && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Resolved At: {new Date(c.resolvedAt).toLocaleString()}
+                    </p>
+                  )}
+                  <div className="mt-3 flex gap-3">
+                    {status === "pending" && (
+                      <button
+                        onClick={() => setSelectedComplaint(c)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded"
+                      >
+                        Mark Resolved
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(c._id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-        {complaints.length === 0 && (
-          <div className="p-5 text-gray-500 dark:text-gray-400 text-center">
-            No complaints yet.
+              {(grouped[status] || []).length === 0 && (
+                <p className="text-gray-400">No {status} complaints</p>
+              )}
+            </div>
           </div>
-        )}
+        ))}
       </div>
-    </div>
+
+      {/* Resolve Modal */}
+      {selectedComplaint && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-bold mb-2">Resolve Complaint</h3>
+            <p className="mb-3"><strong>{selectedComplaint.title}</strong></p>
+            <p className="mb-4">{selectedComplaint.description}</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedComplaint(null)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleResolve(selectedComplaint._id)}
+                className="px-4 py-2 bg-green-600 text-white rounded"
+              >
+                Confirm Resolve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
   );
 }
