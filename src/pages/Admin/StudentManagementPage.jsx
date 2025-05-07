@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import axios from "axios";
 import { Plus, Trash2 } from "lucide-react";
+import ImageUploader from "../../components/ImageUploader";
 
 export default function StudentManagementPage() {
   const [students, setStudents] = useState([]);
@@ -17,8 +18,8 @@ export default function StudentManagementPage() {
     detailPhotos: {
       rentAgreement: "",
       aadharPhotos: "",
-      passportPhoto: ""
-    }
+      passportPhoto: "",
+    },
   });
   const [editingStudent, setEditingStudent] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -43,7 +44,7 @@ export default function StudentManagementPage() {
     setFormData({
       name: "",
       email: "",
-      password: "",
+      dispositAmount: "",
       gender: "male",
       roomAllocated: "",
       feeStatus: "unpaid",
@@ -51,8 +52,8 @@ export default function StudentManagementPage() {
       detailPhotos: {
         rentAgreement: "",
         aadharPhotos: "",
-        passportPhoto: ""
-      }
+        passportPhoto: "",
+      },
     });
     setEditingStudent(null);
     setShowForm(false);
@@ -70,23 +71,27 @@ export default function StudentManagementPage() {
           : [],
         aadharPhotos: formData.detailPhotos.aadharPhotos
           ? formData.detailPhotos.aadharPhotos.split(",").map((x) => x.trim())
-          : []
-      }
+          : [],
+      },
     };
 
     try {
       if (editingStudent) {
-        await axios.put(`http://localhost:5001/users/${editingStudent._id}`, dataToSend);
+        await axios.put(
+          `http://localhost:5001/users/${editingStudent._id}`,
+          dataToSend
+        );
         alert("Student updated successfully!");
       } else {
-        await axios.post("http://localhost:5001/users", dataToSend);
-        alert("Student created successfully!");
+        const res = await axios.post("http://localhost:5001/users", dataToSend);
+        if (res.status === 201) alert("Student created successfully!");
       }
       fetchStudents();
+      fetchRooms();
       resetForm();
     } catch (err) {
       console.error(err);
-      alert("Error saving student!");
+      alert(err?.response?.data?.message || "Error saving student!");
     }
   };
 
@@ -94,6 +99,7 @@ export default function StudentManagementPage() {
     if (confirm("Delete student?")) {
       await axios.delete(`http://localhost:5001/users/${id}`);
       fetchStudents();
+      fetchRooms();
     }
   };
 
@@ -110,172 +116,218 @@ export default function StudentManagementPage() {
           <Plus className="h-4 w-4" /> Add Student
         </button>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4">
-        {students.map((s) => (
-          <div key={s._id} className="bg-white shadow border rounded-xl p-4 relative flex flex-col h-fit">
-            <div className="flex justify-between">
-              <div>
-                <h2 className="text-md font-semibold">{s.name}</h2>
-                <p className="text-xs">Email: {s.email}</p>
-                <p className="text-xs">Gender: {s.gender}</p>
-                <p className="text-xs">Phone: {s.phoneNumber}</p>
-                <p className="text-xs">Fee: {s.feeStatus}</p>
-                <p className="text-xs">Room: {s.roomAllocated?.roomNumber || "Not assigned"}</p>
+      {students.length == 0 ? (
+        <div className="flex flex-col items-center justify-center text-center mt-10 text-gray-500">
+          <p className="text-lg font-medium">No resident found</p>
+          <p className="text-sm">Create a new resident or check back later.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-4">
+          {students.map((s) => (
+            <div
+              key={s._id}
+              className="bg-white shadow border rounded-xl p-4 relative flex flex-col h-fit"
+            >
+              <div className="flex justify-between">
+                <div>
+                  <h2 className="text-md font-semibold">{s.name}</h2>
+                  <p className="text-xs">Email: {s.email}</p>
+                  <p className="text-xs">Gender: {s.gender}</p>
+                  <p className="text-xs">Phone: {s.phoneNumber}</p>
+                  <p className="text-xs">Fee: {s.feeStatus}</p>
+                  <p className="text-xs">
+                    Room: {s.roomAllocated?.roomNumber || "Not assigned"}
+                  </p>
+                  {s.roomAllocated && (
+                    <p className="text-xs text-gray-500">
+                      Occupied: {s.roomAllocated.occupied} /{" "}
+                      {s.roomAllocated.capacity} —{" "}
+                      {s.roomAllocated.capacity - s.roomAllocated.occupied === 0
+                        ? "Fully Occupied"
+                        : `${
+                            s.roomAllocated.capacity - s.roomAllocated.occupied
+                          } Vacant`}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1 items-end ml-2">
+                  {s.detailPhotos.passportPhoto && (
+                    <img
+                      src={s.detailPhotos.passportPhoto}
+                      alt="Passport"
+                      className="w-14 h-14 object-cover rounded cursor-pointer"
+                      onClick={() =>
+                        window.open(s.detailPhotos.passportPhoto, "_blank")
+                      }
+                    />
+                  )}
+                  {(s.detailPhotos.rentAgreement || []).map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt="Rent"
+                      className="w-14 h-14 object-cover rounded cursor-pointer"
+                      onClick={() => window.open(url, "_blank")}
+                    />
+                  ))}
+                  {(s.detailPhotos.aadharPhotos || []).map((url, idx) => (
+                    <img
+                      key={idx}
+                      src={url}
+                      alt="Aadhar"
+                      className="w-14 h-14 object-cover rounded cursor-pointer"
+                      onClick={() => window.open(url, "_blank")}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col gap-1 items-end ml-2">
-                {s.detailPhotos.passportPhoto && (
-                  <img
-                    src={s.detailPhotos.passportPhoto}
-                    alt="Passport"
-                    className="w-14 h-14 object-cover rounded cursor-pointer"
-                    onClick={() => window.open(s.detailPhotos.passportPhoto, "_blank")}
-                  />
-                )}
-                {(s.detailPhotos.rentAgreement || []).map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt="Rent"
-                    className="w-14 h-14 object-cover rounded cursor-pointer"
-                    onClick={() => window.open(url, "_blank")}
-                  />
-                ))}
-                {(s.detailPhotos.aadharPhotos || []).map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt="Aadhar"
-                    className="w-14 h-14 object-cover rounded cursor-pointer"
-                    onClick={() => window.open(url, "_blank")}
-                  />
-                ))}
+              <div className="flex justify-between pt-3">
+                <button
+                  onClick={() => {
+                    setEditingStudent(s);
+                    setFormData({
+                      ...s,
+                      roomAllocated: s.roomAllocated?._id || "",
+                      detailPhotos: {
+                        passportPhoto: s.detailPhotos?.passportPhoto || "",
+                        rentAgreement: (
+                          s.detailPhotos?.rentAgreement || []
+                        ).join(", "),
+                        aadharPhotos: (s.detailPhotos?.aadharPhotos || []).join(
+                          ", "
+                        ),
+                      },
+                    });
+                    setShowForm(true);
+                  }}
+                  className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(s._id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             </div>
-            <div className="flex justify-between pt-3">
-              <button
-                onClick={() => {
-                  setEditingStudent(s);
-                  setFormData({
-                    ...s,
-                    detailPhotos: {
-                      passportPhoto: s.detailPhotos?.passportPhoto || "",
-                      rentAgreement: (s.detailPhotos?.rentAgreement || []).join(", "),
-                      aadharPhotos: (s.detailPhotos?.aadharPhotos || []).join(", ")
-                    }
-                  });
-                  setShowForm(true);
-                }}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(s._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded text-sm"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex justify-center items-start px-4 py-10 overflow-y-auto">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 relative">
-            <button onClick={resetForm} className="absolute top-2 right-4 text-2xl text-gray-500">
+            <button
+              onClick={resetForm}
+              className="absolute top-2 right-4 text-2xl text-gray-500"
+            >
               &times;
             </button>
             <h2 className="text-xl font-bold text-blue-700 mb-4 text-center">
               {editingStudent ? "Edit Student" : "Add Student"}
             </h2>
-            <div className="grid grid-cols-1 gap-4">
-              {["name", "email", "password", "phoneNumber"].map((field) => (
+            <form
+              onSubmit={handleFormSubmit}
+              className="grid grid-cols-1 gap-4"
+            >
+              {"name,email,phoneNumber,deposit amount".split(",").map((field) => (
                 <input
                   key={field}
                   placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                   className="border px-3 py-2 rounded w-full"
                   value={formData[field]}
                   type={field === "password" ? "password" : "text"}
-                  onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, [field]: e.target.value })
+                  }
                 />
               ))}
 
               <select
                 className="border px-3 py-2 rounded"
                 value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, gender: e.target.value })
+                }
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
 
-              <select
-                className="border px-3 py-2 rounded"
-                value={formData.feeStatus}
-                onChange={(e) => setFormData({ ...formData, feeStatus: e.target.value })}
-              >
-                <option value="unpaid">Unpaid</option>
-                <option value="paid">Paid</option>
-              </select>
+             
 
               <select
                 className="border px-3 py-2 rounded"
                 value={formData.roomAllocated}
-                onChange={(e) => setFormData({ ...formData, roomAllocated: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, roomAllocated: e.target.value })
+                }
               >
                 <option value="">-- Select Room --</option>
                 {rooms.map((r) => (
-                  <option key={r._id} value={r._id}>
-                    Room #{r.roomNumber}
+                  <option
+                    key={r._id}
+                    value={r._id}
+                    disabled={r.occupied >= r.capacity}
+                  >
+                    Room #{r.roomNumber} ({r.capacity - r.occupied} vacant)
                   </option>
                 ))}
               </select>
 
-              <input
-                placeholder="Passport Photo URL"
-                className="border px-3 py-2 rounded"
+              <ImageUploader
+                label="Passport Photo"
                 value={formData.detailPhotos.passportPhoto}
-                onChange={(e) =>
+                onUpload={(url) =>
                   setFormData({
                     ...formData,
-                    detailPhotos: { ...formData.detailPhotos, passportPhoto: e.target.value }
+                    detailPhotos: {
+                      ...formData.detailPhotos,
+                      passportPhoto: url,
+                    },
                   })
                 }
               />
-              <input
-                placeholder="Rent Agreement URLs (comma separated)"
-                className="border px-3 py-2 rounded"
+
+              <ImageUploader
+                label="Rent Agreement"
                 value={formData.detailPhotos.rentAgreement}
-                onChange={(e) =>
+                onUpload={(url) =>
                   setFormData({
                     ...formData,
-                    detailPhotos: { ...formData.detailPhotos, rentAgreement: e.target.value }
+                    detailPhotos: {
+                      ...formData.detailPhotos,
+                      rentAgreement: url,
+                    },
                   })
                 }
               />
-              <input
-                placeholder="Aadhar Photo URLs (comma separated)"
-                className="border px-3 py-2 rounded"
+
+              <ImageUploader
+                label="Aadhar Photo"
                 value={formData.detailPhotos.aadharPhotos}
-                onChange={(e) =>
+                onUpload={(url) =>
                   setFormData({
                     ...formData,
-                    detailPhotos: { ...formData.detailPhotos, aadharPhotos: e.target.value }
+                    detailPhotos: {
+                      ...formData.detailPhotos,
+                      aadharPhotos: url,
+                    },
                   })
                 }
               />
 
               <div className="text-right">
                 <button
-                  onClick={handleFormSubmit}
+                  type="submit"
                   className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
                 >
                   {editingStudent ? "Update Student" : "Add Student"}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

@@ -12,7 +12,7 @@ import {
 
 const stats = [
   {
-    label: "Total Residents",
+    label: "Total Rooms",
     value: "342",
     icon: Users,
     color: "text-blue-600 bg-blue-100",
@@ -24,7 +24,7 @@ const stats = [
     color: "text-green-600 bg-green-100",
   },
   {
-    label: "Open Complaints",
+    label: "Total Residence",
     value: "24",
     icon: FileWarning,
     color: "text-yellow-600 bg-yellow-100",

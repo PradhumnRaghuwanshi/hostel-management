@@ -1,192 +1,160 @@
+// MessManagementPage.jsx
 import React, { useEffect, useState } from "react";
+import AdminLayout from "../../components/admin/AdminLayout";
 import axios from "axios";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 export default function MessManagementPage() {
-  const [menus, setMenus] = useState([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({
+  const [menuList, setMenuList] = useState([]);
+  const [formData, setFormData] = useState({
     date: "",
     breakfast: "",
     lunch: "",
-    dinner: "",
+    dinner: ""
   });
-
-  const fetchMenus = async () => {
-    try {
-      const res = await axios.get("https://hostel-management-backend-qyvz.onrender.com/foodmenu");
-      setMenus(res.data.data || []);
-    } catch (err) {
-      console.error("Error fetching menus:", err);
-    }
-  };
+  const [editingId, setEditingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     fetchMenus();
   }, []);
 
-  const handleSubmit = async () => {
+  const fetchMenus = async () => {
+    const res = await axios.get("http://localhost:5001/menu");
+    setMenuList(res.data.data || []);
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const formattedDate = new Date(form.date + "T00:00:00Z");
-
       const payload = {
-        breakfast: form.breakfast,
-        lunch: form.lunch,
-        dinner: form.dinner,
-        date: formattedDate,
+        ...formData,
+        date: new Date(formData.date)
       };
-
-      if (editing) {
-        await axios.put(`https://hostel-management-backend-qyvz.onrender.com/foodmenu/${editing._id}`, payload);
-        alert("Menu updated successfully");
+      if (editingId) {
+        await axios.put(`http://localhost:5001/menu/${editingId}`, payload);
+        alert("Menu updated");
       } else {
-        await axios.post("https://hostel-management-backend-qyvz.onrender.com/foodmenu", payload);
-        alert("Menu added successfully");
+        await axios.post("http://localhost:5001/menu", payload);
+        alert("Menu created");
       }
-
       fetchMenus();
-      setForm({ date: "", breakfast: "", lunch: "", dinner: "" });
-      setEditing(null);
       setShowForm(false);
+      setFormData({ date: "", breakfast: "", lunch: "", dinner: "" });
+      setEditingId(null);
     } catch (err) {
-      console.error("Submit error:", err?.response?.data || err.message);
-      alert("Error: " + (err?.response?.data?.message || err.message));
+      alert("Error saving menu");
+      console.error(err);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this menu?")) return;
-    try {
-      await axios.delete(`https://hostel-management-backend-qyvz.onrender.com/foodmenu/${id}`);
+    if (confirm("Delete this menu?")) {
+      await axios.delete(`http://localhost:5001/menu/${id}`);
       fetchMenus();
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete menu");
     }
   };
 
-  const openEdit = (menu) => {
-    setForm({
-      date: menu.date.slice(0, 10),
-      breakfast: menu.breakfast,
-      lunch: menu.lunch,
-      dinner: menu.dinner,
-    });
-    setEditing(menu);
-    setShowForm(true);
-  };
-
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mess Menu Management</h1>
+    <AdminLayout title="Mess Management">
+      <div className="flex justify-end p-4">
         <button
           onClick={() => {
-            setForm({ date: "", breakfast: "", lunch: "", dinner: "" });
-            setEditing(null);
+            setFormData({ date: "", breakfast: "", lunch: "", dinner: "" });
+            setEditingId(null);
             setShowForm(true);
           }}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          className="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-2"
         >
-          Add New Menu
+          <Plus className="h-4 w-4" /> Add Menu
         </button>
       </div>
 
-      {/* Grid display */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {menus.map((menu) => (
-          <div key={menu._id} className="bg-white p-4 rounded shadow border">
-            <h2 className="font-bold text-lg mb-1">
-              {new Date(menu.date).toLocaleDateString()}
-            </h2>
-            <p className="text-gray-700"><strong>Breakfast:</strong> {menu.breakfast}</p>
-            <p className="text-gray-700"><strong>Lunch:</strong> {menu.lunch}</p>
-            <p className="text-gray-700"><strong>Dinner:</strong> {menu.dinner}</p>
-            <div className="mt-4 flex justify-end gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+        {menuList.map((item) => (
+          <div
+            key={item._id}
+            className="bg-white border shadow rounded-xl p-4 hover:shadow-md transition-all"
+          >
+            <h3 className="font-semibold mb-2">{new Date(item.date).toDateString()}</h3>
+            <p className="text-sm">🍳 Breakfast: {item.breakfast}</p>
+            <p className="text-sm">🍛 Lunch: {item.lunch}</p>
+            <p className="text-sm">🍽️ Dinner: {item.dinner}</p>
+            <div className="flex justify-between mt-3">
               <button
-                onClick={() => openEdit(menu)}
-                className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => {
+                  setFormData({
+                    date: item.date.split("T")[0],
+                    breakfast: item.breakfast,
+                    lunch: item.lunch,
+                    dinner: item.dinner
+                  });
+                  setEditingId(item._id);
+                  setShowForm(true);
+                }}
+                className="text-sm bg-blue-600 text-white px-3 py-1 rounded"
               >
-                Edit
+                <Pencil size={14} />
               </button>
               <button
-                onClick={() => handleDelete(menu._id)}
-                className="text-sm px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                onClick={() => handleDelete(item._id)}
+                className="text-sm bg-red-500 text-white px-3 py-1 rounded"
               >
-                Delete
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Form Modal (DIV-based) */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-start p-10 overflow-y-auto">
+          <div className="bg-white w-full max-w-md rounded-lg p-6 relative">
             <button
               onClick={() => setShowForm(false)}
-              className="absolute top-2 right-4 text-2xl text-gray-500 hover:text-gray-700"
+              className="absolute top-2 right-4 text-2xl text-gray-500"
             >
               &times;
             </button>
-            <h2 className="text-xl font-bold mb-4">
-              {editing ? "Edit Menu" : "Add Menu"}
+            <h2 className="text-xl font-bold text-blue-700 mb-4 text-center">
+              {editingId ? "Edit Menu" : "Add Menu"}
             </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Date</label>
-                <input
-                  type="date"
-                  required
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  className="w-full border px-3 py-2 rounded"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Breakfast</label>
-                <input
-                  type="text"
-                  value={form.breakfast}
-                  onChange={(e) => setForm({ ...form, breakfast: e.target.value })}
-                  className="w-full border px-3 py-2 rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Lunch</label>
-                <input
-                  type="text"
-                  value={form.lunch}
-                  onChange={(e) => setForm({ ...form, lunch: e.target.value })}
-                  className="w-full border px-3 py-2 rounded"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Dinner</label>
-                <input
-                  type="text"
-                  value={form.dinner}
-                  onChange={(e) => setForm({ ...form, dinner: e.target.value })}
-                  className="w-full border px-3 py-2 rounded"
-                  required
-                />
-              </div>
-              <div className="text-right pt-2">
-                <button
-                  onClick={handleSubmit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
-                >
-                  {editing ? "Update" : "Add"}
-                </button>
-              </div>
-            </div>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+                className="w-full border px-3 py-2 rounded"
+              />
+              <input
+                placeholder="Breakfast"
+                value={formData.breakfast}
+                onChange={(e) => setFormData({ ...formData, breakfast: e.target.value })}
+                className="w-full border px-3 py-2 rounded"
+              />
+              <input
+                placeholder="Lunch"
+                value={formData.lunch}
+                onChange={(e) => setFormData({ ...formData, lunch: e.target.value })}
+                className="w-full border px-3 py-2 rounded"
+              />
+              <input
+                placeholder="Dinner"
+                value={formData.dinner}
+                onChange={(e) => setFormData({ ...formData, dinner: e.target.value })}
+                className="w-full border px-3 py-2 rounded"
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
+              >
+                {editingId ? "Update Menu" : "Add Menu"}
+              </button>
+            </form>
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
