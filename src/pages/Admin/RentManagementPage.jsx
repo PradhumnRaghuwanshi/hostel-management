@@ -1,5 +1,4 @@
-// RentManagementPage.jsx — Finalized with RentPayments Support
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { Trash2, Plus, FileText, Download, Pencil } from "lucide-react";
 import axios from "axios";
@@ -8,11 +7,33 @@ import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { HostelData } from "../../Context";
+import UpdateRentModal from "../../components/UpdateRentModal";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function RentManagementPage() {
+  useEffect(() => {
+    fetchRoomsWithRents();
+  }, []);
+  const { fetchRoomsWithRents, roomRentData, setRoomRentData } = useContext(HostelData);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedRentId, setSelectedRentId] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const handleOpenModal = (room, rentId) => {
+    setSelectedRoom(room);
+    setSelectedRentId(rentId);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+  const handleRentUpdate = () => {
+    // Refresh the data or make any changes after the rent is updated
+    console.log('Rent updated');
+  };
+
   const [rents, setRents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
@@ -25,8 +46,8 @@ export default function RentManagementPage() {
     electricity: {
       unitsConsumed: 0,
       electricityAmountDue: 0,
-      electricityStatus: "unpaid"
-    }
+      electricityStatus: "unpaid",
+    },
   });
   const [editingRent, setEditingRent] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -34,11 +55,21 @@ export default function RentManagementPage() {
 
   useEffect(() => {
     fetchRents();
+    getRoomData();
   }, []);
 
+  const [roomDatam, setRoomData] = useState([]);
   const fetchRents = async () => {
     const res = await axios.get("http://localhost:5001/rents");
     setRents(res.data.data || []);
+    console.log(res.data.data);
+  };
+
+  const getRoomData = () => {
+    axios
+      .get("http://localhost:5001/rooms")
+      .then((res) => setRoomData(res.data.data))
+      .catch((err) => console.log(err));
   };
 
   const handleFormSubmit = async (e) => {
@@ -52,17 +83,22 @@ export default function RentManagementPage() {
 
       const amountPaid = parseFloat(formData.amountPaid);
       const amountDue = parseFloat(formData.amountDue);
-      const rentPayments = [{
-        amountPaid,
-        amountDue,
-        datePaid: formData.datePaid,
-        status: formData.status
-      }];
+      const rentPayments = [
+        {
+          amountPaid,
+          amountDue,
+          datePaid: formData.datePaid,
+          status: formData.status,
+        },
+      ];
       const totalRentPaid = amountPaid;
       const totalRentDue = amountPaid + amountDue;
       const rentStatus =
-        amountPaid === 0 ? "unpaid" :
-        amountPaid >= totalRentDue ? "paid" : "partial";
+        amountPaid === 0
+          ? "unpaid"
+          : amountPaid >= totalRentDue
+          ? "paid"
+          : "partial";
 
       const payload = {
         room: matchedRoom._id,
@@ -72,9 +108,11 @@ export default function RentManagementPage() {
         rentStatus,
         electricity: {
           unitsConsumed: parseFloat(formData.electricity.unitsConsumed),
-          electricityAmountDue: parseFloat(formData.electricity.electricityAmountDue),
-          electricityStatus: formData.electricity.electricityStatus
-        }
+          electricityAmountDue: parseFloat(
+            formData.electricity.electricityAmountDue
+          ),
+          electricityStatus: formData.electricity.electricityStatus,
+        },
       };
 
       await axios.post("http://localhost:5001/rents", payload);
@@ -96,8 +134,8 @@ export default function RentManagementPage() {
       electricity: {
         unitsConsumed: 0,
         electricityAmountDue: 0,
-        electricityStatus: "unpaid"
-      }
+        electricityStatus: "unpaid",
+      },
     });
     setEditingRent(null);
     setShowForm(false);
@@ -113,8 +151,8 @@ export default function RentManagementPage() {
       electricity: {
         unitsConsumed: rent.electricity?.unitsConsumed || 0,
         electricityAmountDue: rent.electricity?.electricityAmountDue || 0,
-        electricityStatus: rent.electricity?.electricityStatus || "unpaid"
-      }
+        electricityStatus: rent.electricity?.electricityStatus || "unpaid",
+      },
     });
     setEditingRent(rent);
     setShowForm(true);
@@ -131,38 +169,35 @@ export default function RentManagementPage() {
   const handlePDFExport = () => {
     const doc = new jsPDF();
     doc.text("Rent Report", 14, 10);
-    const tableData = rents.map(({ room, totalRentDue, totalRentPaid, rentStatus }) => [
-      room?.roomNumber || room, totalRentDue, totalRentPaid, rentStatus
-    ]);
-    doc.autoTable({ head: [["Room", "Rent Due", "Rent Paid", "Status"]], body: tableData });
+    const tableData = rents.map(
+      ({ room, totalRentDue, totalRentPaid, rentStatus }) => [
+        room?.roomNumber || room,
+        totalRentDue,
+        totalRentPaid,
+        rentStatus,
+      ]
+    );
+    doc.autoTable({
+      head: [["Room", "Rent Due", "Rent Paid", "Status"]],
+      body: tableData,
+    });
     doc.save("RentReport.pdf");
   };
 
   const handleExport = () => {
-    const exportData = rents.map(({ room, totalRentDue, totalRentPaid, rentStatus }) => ({
-      Room: room?.roomNumber || room,
-      "Total Rent Due": totalRentDue,
-      "Total Rent Paid": totalRentPaid,
-      Status: rentStatus
-    }));
+    const exportData = rents.map(
+      ({ room, totalRentDue, totalRentPaid, rentStatus }) => ({
+        Room: room?.roomNumber || room,
+        "Total Rent Due": totalRentDue,
+        "Total Rent Paid": totalRentPaid,
+        Status: rentStatus,
+      })
+    );
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Rents");
     XLSX.writeFile(workbook, "RentData.xlsx");
   };
-
-  const filtered = rents.filter((r) =>
-    r.room?.roomNumber?.toString().toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterStatus ? r.rentStatus === filterStatus : true)
-  );
-
-  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  const chartData = [
-    { name: "Paid", value: rents.filter((r) => r.rentStatus === "paid").length },
-    { name: "Unpaid", value: rents.filter((r) => r.rentStatus === "unpaid").length },
-    { name: "Partial", value: rents.filter((r) => r.rentStatus === "partial").length }
-  ];
 
   return (
     <AdminLayout title="Rent Management">
@@ -189,62 +224,104 @@ export default function RentManagementPage() {
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleExport} className="bg-green-600 text-white px-3 py-2 rounded flex items-center gap-1">
+            <button
+              onClick={handleExport}
+              className="bg-green-600 text-white px-3 py-2 rounded flex items-center gap-1"
+            >
               <Download size={16} /> Excel
             </button>
-            <button onClick={handlePDFExport} className="bg-red-600 text-white px-3 py-2 rounded flex items-center gap-1">
+            <button
+              onClick={handlePDFExport}
+              className="bg-red-600 text-white px-3 py-2 rounded flex items-center gap-1"
+            >
               <FileText size={16} /> PDF
             </button>
-            <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-1">
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-1"
+            >
               <Plus size={16} /> Add Rent
             </button>
           </div>
         </div>
-
-    
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paginated.map((rent) => (
-            <div key={rent._id} className="p-4 border rounded shadow bg-white">
-              <h3 className="font-semibold text-lg mb-2">
-                Room: {rent.room?.roomNumber}
-              </h3>
-              <p>Total Paid: ₹{rent.totalRentPaid}</p>
-              <p>Total Due: ₹{rent.totalRentDue}</p>
-              <p>Status: {rent.rentStatus}</p>
-              <hr className="my-2" />
-              <p>Electricity Units: {rent.electricity.unitsConsumed}</p>
-              <p>Electricity Due: ₹{rent.electricity.electricityAmountDue}</p>
-              <p>Electricity Status: {rent.electricity.electricityStatus}</p>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => handleEdit(rent)}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={() => handleDelete(rent.room._id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          {JSON.stringify(roomRentData)}
+          <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Room Number</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Rent</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Rent Status</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Last Payment</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Electricity Bill</th>
+              <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {roomRentData.map((room) => (
+              <tr key={room._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm text-gray-700">{room.roomNumber}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">₹{room.rent}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {room.rentDetails.length > 0 ? (
+                    <span className="text-green-600">Paid</span>
+                  ) : (
+                    <span className="text-red-600">Due</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {room.rentDetails.length > 0 ? (
+                    new Date(room.rentDetails[room.rentDetails.length - 1].date).toLocaleDateString()
+                  ) : (
+                    'N/A'
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  {room.electricityBill.length > 0 ? (
+                    <span className="text-green-600">Paid</span>
+                  ) : (
+                    <span className="text-red-600">Pending</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-700">
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                    onClick={() => handleOpenModal(room, 'rent-id-1')}
+                  >
+                    Update Rent
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {showModal && (
+        <UpdateRentModal
+          room={selectedRoom}
+          rentId={selectedRentId}
+          onClose={handleCloseModal}
+          onUpdate={handleRentUpdate}
+        />
+      )}
         </div>
-
-        <div className="flex justify-center gap-2">
-          {Array.from({ length: Math.ceil(filtered.length / ITEMS_PER_PAGE) }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-3 py-1 rounded ${currentPage === i + 1 ? "bg-blue-600 text-white" : "bg-gray-200"}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-
+        {/* <div className="flex justify-center gap-2 mt-4">
+          {Array.from(
+            { length: Math.ceil(filtered.length / ITEMS_PER_PAGE) },
+            (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-3 py-1 rounded ${
+                  currentPage === i + 1
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                {i + 1}
+              </button>
+            )
+          )}
+        </div> */}
         {showForm && (
           <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-start px-2 pt-10 pb-6 overflow-y-auto">
             <div className="bg-white w-full max-w-lg rounded-lg shadow-lg p-6 relative">
@@ -261,30 +338,40 @@ export default function RentManagementPage() {
                 <input
                   placeholder="Room Number"
                   value={formData.roomNumber}
-                  onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, roomNumber: e.target.value })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <input
                   placeholder="Amount Paid"
                   value={formData.amountPaid}
-                  onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amountPaid: e.target.value })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <input
                   placeholder="Amount Due"
                   value={formData.amountDue}
-                  onChange={(e) => setFormData({ ...formData, amountDue: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amountDue: e.target.value })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <input
                   type="date"
                   value={formData.datePaid}
-                  onChange={(e) => setFormData({ ...formData, datePaid: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, datePaid: e.target.value })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 >
                   <option value="paid">Paid</option>
@@ -294,27 +381,42 @@ export default function RentManagementPage() {
                 <input
                   placeholder="Electricity Units"
                   value={formData.electricity.unitsConsumed}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    electricity: { ...formData.electricity, unitsConsumed: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      electricity: {
+                        ...formData.electricity,
+                        unitsConsumed: e.target.value,
+                      },
+                    })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <input
                   placeholder="Electricity Amount Due"
                   value={formData.electricity.electricityAmountDue}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    electricity: { ...formData.electricity, electricityAmountDue: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      electricity: {
+                        ...formData.electricity,
+                        electricityAmountDue: e.target.value,
+                      },
+                    })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 />
                 <select
                   value={formData.electricity.electricityStatus}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    electricity: { ...formData.electricity, electricityStatus: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      electricity: {
+                        ...formData.electricity,
+                        electricityStatus: e.target.value,
+                      },
+                    })
+                  }
                   className="w-full border px-3 py-2 rounded"
                 >
                   <option value="paid">Paid</option>

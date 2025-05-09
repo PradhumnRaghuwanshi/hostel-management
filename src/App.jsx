@@ -13,6 +13,7 @@ import NoticesPage from './pages/Admin/NoticesPage'
 import Settings from './pages/Admin/Settings'
 import MessManagementPage from './pages/Admin/MessManagementPage'
 import StudentComplaints from './pages/Student/StudentComplaints'
+import Context from './Context'
 
 
 
@@ -21,6 +22,7 @@ import StudentComplaints from './pages/Student/StudentComplaints'
 
 function App() {
   return (
+    <Context>
     <BrowserRouter>
       <Routes>
         <Route path='/Login' element={<Login></Login>}></Route>
@@ -38,6 +40,7 @@ function App() {
         <Route path="/Studentcomplaints" element={<StudentComplaints/>} />
       </Routes>
     </BrowserRouter>
+    </Context>
   )
 }
 
