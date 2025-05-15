@@ -19,11 +19,11 @@ const navLinks = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/AdminDashboard" },
   { label: "Rooms", icon: Bed, to: "/RoomManagementPage" },
   { label: "Students", icon: Users, to: "/StudentRequest" },
-  { label: "Complaints", icon: FileWarning, to: "/AdminComplaints" },
+  // { label: "Complaints", icon: FileWarning, to: "/AdminComplaints" },
   { label: "Rent", icon: IndianRupee, to: "/RentManagementPage" },
   { label: "Utilities", icon: Zap, to: "/Utilities" },
-  { label: "Mess", icon: Utensils, to: "/Mess" },
-  { label: "Notices", icon: ScrollText, to: "/Notices" },
+  // { label: "Mess", icon: Utensils, to: "/Mess" },
+  // { label: "Notices", icon: ScrollText, to: "/Notices" },
   { label: "Settings", icon: Settings, to: "/Settings" },
 ];
 

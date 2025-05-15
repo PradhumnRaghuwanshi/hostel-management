@@ -7,22 +7,18 @@ import "react-toastify/dist/ReactToastify.css";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import { HostelData } from "../../Context";
 import UpdateRentModal from "../../components/UpdateRentModal";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function RentManagementPage() {
-  useEffect(() => {
-    fetchRoomsWithRents();
-  }, []);
-  const { fetchRoomsWithRents, roomRentData, setRoomRentData } = useContext(HostelData);
+  
   const [showModal, setShowModal] = useState(false);
   const [selectedRentId, setSelectedRentId] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const handleOpenModal = (room, rentId) => {
+  const handleOpenModal = (room) => {
     setSelectedRoom(room);
-    setSelectedRentId(rentId);
+    setSelectedRentId(room._id);
     setShowModal(true);
   };
 
@@ -58,9 +54,9 @@ export default function RentManagementPage() {
     getRoomData();
   }, []);
 
-  const [roomDatam, setRoomData] = useState([]);
+  const [roomRentData, setRoomData] = useState([]);
   const fetchRents = async () => {
-    const res = await axios.get("http://localhost:5001/rents");
+    const res = await axios.get("http://localhost:5001/rooms");
     setRents(res.data.data || []);
     console.log(res.data.data);
   };
@@ -245,7 +241,6 @@ export default function RentManagementPage() {
           </div>
         </div>
         <div className="overflow-x-auto">
-          {JSON.stringify(roomRentData)}
           <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
           <thead>
             <tr className="bg-gray-100">
@@ -258,35 +253,35 @@ export default function RentManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {roomRentData.map((room) => (
+            {roomRentData?.map((room) => (
               <tr key={room._id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-700">{room.roomNumber}</td>
-                <td className="px-6 py-4 text-sm text-gray-700">₹{room.rent}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">₹{room.rent} </td>
                 <td className="px-6 py-4 text-sm text-gray-700">
-                  {room.rentDetails.length > 0 ? (
+                  {room.currentRentStatus.status === "paid" ? (
                     <span className="text-green-600">Paid</span>
                   ) : (
-                    <span className="text-red-600">Due</span>
+                    <span className="text-red-600">Due - {`(₹ ${room.currentRentStatus.rentDue })`}</span>
                   )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">
-                  {room.rentDetails.length > 0 ? (
-                    new Date(room.rentDetails[room.rentDetails.length - 1].date).toLocaleDateString()
+                  {room.currentRentStatus.paidOn  ? (
+                    room.currentRentStatus?.paidOn.slice(0, 10)
                   ) : (
                     'N/A'
                   )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">
-                  {room.electricityBill.length > 0 ? (
+                  { room.currentRentStatus.electricity.amountDue == 0 ? (
                     <span className="text-green-600">Paid</span>
                   ) : (
-                    <span className="text-red-600">Pending</span>
+                    <span className="text-red-600">Pending - (₹ {room.currentRentStatus.electricity.amountDue})</span>
                   )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700">
                   <button
                     className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                    onClick={() => handleOpenModal(room, 'rent-id-1')}
+                    onClick={() => handleOpenModal(room)}
                   >
                     Update Rent
                   </button>

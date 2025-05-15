@@ -3,10 +3,12 @@ import axios from 'axios';
 
 const UpdateRentModal = ({ room, rentId, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
+    roomId: room._id,
     totalRent: room?.rent,
     rentPaid: 0,
     due: 0,
-    electricityAmountDue: 0,
+    unitConsumed:0,
+    electricityAmountDue: room.currentRentStatus.amountDue,
     electricityAmountPaid: 0,
     remarks: '',
   });
@@ -14,26 +16,6 @@ const UpdateRentModal = ({ room, rentId, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (rentId) {
-      axios
-        .get(`/api/rent/${rentId}`)
-        .then((response) => {
-          const data = response.data;
-          setFormData({
-            totalRent: data.totalRent,
-            rentPaid: data.rentPaid,
-            due: data.due,
-            electricityAmountDue: data.electricity.amountDue,
-            electricityAmountPaid: data.electricity.amountPaid,
-            remarks: data.remarks || '',
-          });
-        })
-        .catch(() => {
-          setError('Error fetching rent details');
-        });
-    }
-  }, [rentId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,8 +35,7 @@ const UpdateRentModal = ({ room, rentId, onClose, onUpdate }) => {
         ...formData,
         room: room,
       };
-
-      await axios.put(`/api/rent/${rentId}`, updatedRent);
+      await axios.post(`http://localhost:5001/rents/`, updatedRent);
       onUpdate();
       onClose();
     } catch {
@@ -65,7 +46,7 @@ const UpdateRentModal = ({ room, rentId, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="fixed inset-0  flex items-center justify-center z-50">
+    <div className="fixed inset-0 px-4  flex items-center justify-center z-50">
         <div className='bg-black opacity-50 h-[100vh] w-[100%] absolute'></div>
       <div className="bg-white z-1 rounded-2xl shadow-lg w-full max-w-2xl p-6 relative">
         <div className="flex justify-between items-center mb-4">
@@ -116,10 +97,22 @@ const UpdateRentModal = ({ room, rentId, onClose, onUpdate }) => {
             <div>
               <label className="block text-sm font-medium text-gray-600" htmlFor="electricityAmountDue">Electricity Due</label>
               <input
+                disabled
                 type="number"
                 name="electricityAmountDue"
                 id="electricityAmountDue"
-                value={formData.electricityAmountDue}
+                value={room.currentRentStatus.rentDue + (10*formData.unitConsumed) - formData.electricityAmountPaid}
+                required
+                className="mt-1 w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-gray-700"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-600" htmlFor="electricityAmountDue">Unit Consumed</label>
+              <input
+                type="number"
+                name="unitConsumed"
+                id="unitConsumed"
+                value={formData.unitConsumed}
                 onChange={handleChange}
                 required
                 className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"

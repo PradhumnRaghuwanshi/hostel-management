@@ -1,5 +1,5 @@
 // AdminDashboard.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import {
   Users,
@@ -9,35 +9,49 @@ import {
   ScrollText,
   Activity,
 } from "lucide-react";
+import axios from "axios";
 
-const stats = [
-  {
-    label: "Total Rooms",
-    value: "342",
-    icon: Users,
-    color: "text-blue-600 bg-blue-100",
-  },
-  {
-    label: "Rooms Occupied",
-    value: "187",
-    icon: Bed,
-    color: "text-green-600 bg-green-100",
-  },
-  {
-    label: "Total Residence",
-    value: "24",
-    icon: FileWarning,
-    color: "text-yellow-600 bg-yellow-100",
-  },
-  {
-    label: "Rent Collected",
-    value: "₹ 3.6L",
-    icon: IndianRupee,
-    color: "text-purple-600 bg-purple-100",
-  },
-];
 
 export default function AdminDashboard() {
+  useEffect(()=>{fetchRoomData(); fetchTenantData()}, [])
+  const [roomData, setRoomData] = useState([]);
+  const fetchRoomData = ()=>{
+    axios.get('http://localhost:5001/rooms').then((res)=> setRoomData(res.data.data)).catch((err)=> console.log(err))
+  }
+
+  const [tenantData, setTenantData] = useState([])
+  const fetchTenantData = ()=>{
+    axios.get('http://localhost:5001/users').then((res)=> setTenantData(res.data.data)).catch((err)=> console.log(err))
+  }
+
+  const stats = [
+    {
+      label: "Total Rooms",
+      value: roomData.length,
+      icon: Users,
+      color: "text-blue-600 bg-blue-100",
+    },
+    {
+      label: "Rooms Occupied",
+      value: roomData.filter((i)=> i.alloted == true).length,
+      icon: Bed,
+      color: "text-green-600 bg-green-100",
+    },
+    {
+      label: "Total Rent",
+      value: `₹${roomData.map((i)=> i.currentRentStatus.totalRent).reduce((a,b)=> a+b, 0)}`,
+      icon: FileWarning,
+      color: "text-yellow-600 bg-yellow-100",
+    },
+    {
+      label: "Rent Collected",
+      value: `₹${roomData.map((i)=> i.currentRentStatus.rentPaid).reduce((a,b)=> a+b, 0)}`,
+      icon: IndianRupee,
+      color: "text-purple-600 bg-purple-100",
+    },
+  ];
+  
+  
   return (
     <AdminLayout title="Dashboard">
       <div className="space-y-10 px-4 sm:px-4 lg:px-4">

@@ -126,7 +126,7 @@ export default function StudentManagementPage() {
           {students.map((s) => (
             <div
               key={s._id}
-              className="bg-white shadow border rounded-xl p-4 relative flex flex-col h-fit"
+              className="bg-white shadow border lg:w-[200%] rounded-xl p-4 relative flex flex-col h-fit"
             >
               <div className="flex justify-between">
                 <div>
