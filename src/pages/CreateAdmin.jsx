@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Mail, Lock, Building, Phone, ArrowRight } from 'lucide-react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import Tilt from 'react-parallax-tilt';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-
 
 const ScrollSection = ({ children }) => {
   const controls = useAnimation();
@@ -31,10 +29,16 @@ const ScrollSection = ({ children }) => {
   );
 };
 
-function Login() {
-  const navigate = useNavigate()
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState({ email: '', password: '' });
+function CreateAdmin() {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    password: '',
+    buildingName: '',
+    contactNumber: '',
+  });
+  const [errors, setErrors] = useState({});
+  const [message, setMessage] = useState('');
 
   const particlesInit = async (engine) => {
     await loadSlim(engine);
@@ -44,32 +48,46 @@ function Login() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
+    setMessage('');
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.fullName) newErrors.fullName = 'Full name is required';
+    if (!formData.username) newErrors.username = 'Username is required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.buildingName) newErrors.buildingName = 'Building name is required';
+    if (!formData.contactNumber) {
+      newErrors.contactNumber = 'Contact number is required';
+    } else if (!/^\d+$/.test(formData.contactNumber)) {
+      newErrors.contactNumber = 'Contact number must be numeric';
+    }
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    let hasError = false;
-    const newErrors = { email: '', password: '' };
+    const newErrors = validateForm();
 
-    if (!formData.email) {
-      newErrors.email = 'Email or username is required';
-      hasError = true;
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-      hasError = true;
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
 
-    setErrors(newErrors);
-
-    if (!hasError) {
-      axios.post('http://localhost:5000/admin', formData).then((res)=>{
-        console.log(res.data.data)
-        localStorage.setItem('admindata', JSON.stringify(res.data.data))
-        navigate('/')
-      })
-      console.log('Form submitted:', formData);
-      // Add your login logic here (e.g., API call)
+    try {
+      const response = await axios.post('http://localhost:5001/admin', formData);
+      setMessage('Admin created successfully!');
+      setFormData({
+        fullName: '',
+        username: '',
+        password: '',
+        buildingName: '',
+        contactNumber: '',
+      });
+    } catch (error) {
+      setMessage(
+        error.response?.data?.message || 'Error creating admin. Please try again.'
+      );
     }
   };
 
@@ -96,7 +114,7 @@ function Login() {
         </a>
       </nav>
 
-      {/* Login Section */}
+      {/* Create Admin Section */}
       <ScrollSection>
         <section className="py-64 px-4 max-w-8xl mx-auto relative overflow-hidden">
           <Particles
@@ -127,26 +145,44 @@ function Login() {
                 transition={{ duration: 0.3 }}
               >
                 <h2 className="text-4xl font-black text-white mb-6 text-center tracking-tight animate-glow">
-                  Login to Your Account
+                  Create Admin Account
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block text-gray-300 font-medium mb-2" htmlFor="email">
-                      Email or Username
+                    <label className="block text-gray-300 font-medium mb-2" htmlFor="fullName">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-400" />
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 bg-black/50 border-2 border-green-500/30 rounded-lg text-gray-100 focus:border-green-500 focus:ring-2 focus:ring-green-500/50 transition-all duration-300"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    {errors.fullName && <p className="text-red-400 text-sm mt-1">{errors.fullName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 font-medium mb-2" htmlFor="username">
+                      Username
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-400" />
                       <input
                         type="text"
-                        id="email"
-                        name="email"
-                        value={formData.email}
+                        id="username"
+                        name="username"
+                        value={formData.username}
                         onChange={handleInputChange}
                         className="w-full pl-10 pr-4 py-3 bg-black/50 border-2 border-green-500/30 rounded-lg text-gray-100 focus:border-green-500 focus:ring-2 focus:ring-green-500/50 transition-all duration-300"
-                        placeholder="Enter your email or username"
+                        placeholder="Enter your username"
                       />
                     </div>
-                    {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                    {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
                   </div>
                   <div>
                     <label className="block text-gray-300 font-medium mb-2" htmlFor="password">
@@ -166,19 +202,60 @@ function Login() {
                     </div>
                     {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
                   </div>
+                  <div>
+                    <label className="block text-gray-300 font-medium mb-2" htmlFor="buildingName">
+                      Building Name
+                    </label>
+                    <div className="relative">
+                      <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-400" />
+                      <input
+                        type="text"
+                        id="buildingName"
+                        name="buildingName"
+                        value={formData.buildingName}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 bg-black/50 border-2 border-green-500/30 rounded-lg text-gray-100 focus:border-green-500 focus:ring-2 focus:ring-green-500/50 transition-all duration-300"
+                        placeholder="Enter building name"
+                      />
+                    </div>
+                    {errors.buildingName && <p className="text-red-400 text-sm mt-1">{errors.buildingName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 font-medium mb-2" htmlFor="contactNumber">
+                      Contact Number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-400" />
+                      <input
+                        type="text"
+                        id="contactNumber"
+                        name="contactNumber"
+                        value={formData.contactNumber}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-4 py-3 bg-black/50 border-2 border-green-500/30 rounded-lg text-gray-100 focus:border-green-500 focus:ring-2 focus:ring-green-500/50 transition-all duration-300"
+                        placeholder="Enter contact number"
+                      />
+                    </div>
+                    {errors.contactNumber && <p className="text-red-400 text-sm mt-1">{errors.contactNumber}</p>}
+                  </div>
+                  {message && (
+                    <p className={`text-center text-sm ${message.includes('successfully') ? 'text-green-400' : 'text-red-400'}`}>
+                      {message}
+                    </p>
+                  )}
                   <motion.button
                     type="submit"
                     whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(74, 222, 128, 0.7)' }}
                     whileTap={{ scale: 0.95 }}
                     className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-lg font-semibold shadow-2xl hover:from-green-600 hover:to-green-700 transition-all duration-300 animate-pulse-slow"
                   >
-                    Login
+                    Create Admin
                   </motion.button>
                 </form>
                 <p className="mt-6 text-center text-gray-300">
-                  Don’t have an account?{' '}
-                  <a href="/signup" className="text-green-400 hover:text-green-300 transition-colors duration-300">
-                    Sign up
+                  Already have an account?{' '}
+                  <a href="/login" className="text-green-400 hover:text-green-300 transition-colors duration-300">
+                    Login
                   </a>
                 </p>
               </motion.div>
@@ -200,4 +277,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default CreateAdmin;

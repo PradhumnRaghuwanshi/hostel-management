@@ -13,7 +13,7 @@ import NoticesPage from './pages/Admin/NoticesPage'
 import Settings from './pages/Admin/Settings'
 import MessManagementPage from './pages/Admin/MessManagementPage'
 import StudentComplaints from './pages/Student/StudentComplaints'
-
+import CreateAdmin from './pages/CreateAdmin'
 
 
 
@@ -38,6 +38,7 @@ function App() {
         <Route path="/Notices" element={<NoticesPage />} />
         <Route path="/Settings" element={<Settings/>} />
         <Route path="/Studentcomplaints" element={<StudentComplaints/>} />
+        <Route path="/Create-admin-account" element={<CreateAdmin/>} />
       </Routes>
     </BrowserRouter>
 

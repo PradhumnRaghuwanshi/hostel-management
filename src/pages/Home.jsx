@@ -1,315 +1,330 @@
-import React, { useEffect } from "react";
-import { CheckCircle, Phone, Mail, ArrowRight, Settings, Bed, BellRing, ScrollText, UtensilsCrossed, Users } from "lucide-react";
-import AOS from "aos";
-import "aos/dist/aos.css";
-import { motion } from "framer-motion";
+import React, { useEffect } from 'react';
+import {
+  Phone,
+  Mail,
+  ArrowRight,
+  Settings,
+  Bed,
+  BellRing,
+  ScrollText,
+  UtensilsCrossed,
+  Users,
+} from 'lucide-react';
+import { motion, useAnimation } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import Particles from 'react-tsparticles';
+import { loadSlim } from 'tsparticles-slim';
+import Tilt from 'react-parallax-tilt';
 
 const features = [
   {
     icon: Bed,
-    title: "Room & Bed Management",
-    desc: "Easily assign, update, and track room and bed availability in real-time."
+    title: 'Room & Bed Management',
+    desc: 'Easily assign, update, and track room and bed availability in real-time.',
   },
   {
     icon: Settings,
-    title: "Rent & Utility Tracking",
-    desc: "Automatically manage rent, electricity, and mess bills with payment tracking."
+    title: 'Rent & Utility Tracking',
+    desc: 'Automatically manage rent, electricity, and mess bills with payment tracking.',
   },
   {
     icon: BellRing,
-    title: "Complaints & Maintenance",
-    desc: "Residents can raise complaints and admins can resolve them quickly."
+    title: 'Complaints & Maintenance',
+    desc: 'Residents can raise complaints and admins can resolve them quickly.',
   },
   {
     icon: Users,
-    title: "Visitor & Leave Log",
-    desc: "Maintain detailed visitor entries and manage outpass/leave requests."
+    title: 'Visitor & Leave Log',
+    desc: 'Maintain detailed visitor entries and manage outpass/leave requests.',
   },
   {
     icon: UtensilsCrossed,
-    title: "Mess & Housekeeping Logs",
-    desc: "Update daily mess menu and track cleaning schedules efficiently."
+    title: 'Mess & Housekeeping Logs',
+    desc: 'Update daily mess menu and track cleaning schedules efficiently.',
   },
   {
     icon: ScrollText,
-    title: "Notices & Announcements",
-    desc: "Share hostel rules, announcements, or alerts with all residents instantly."
-  }
+    title: 'Notices & Announcements',
+    desc: 'Share hostel rules, announcements, or alerts with all residents instantly.',
+  },
 ];
 
-export default function Home() {
+const ScrollSection = ({ children, side }) => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({ triggerOnce: false, threshold: 0.3 });
+
   useEffect(() => {
-    AOS.init({ once: true, duration: 800 });
-  }, []);
+    if (inView) {
+      controls.start({ opacity: 1, y: 0, rotate: 0 });
+    }
+  }, [controls, inView]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 text-gray-800">
-      {/* Hero Section */}
-      <header className="text-center py-24 px-4 relative">
-        <motion.h1 
-          initial={{ opacity: 0, y: -40 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.6 }}
-          className="text-4xl md:text-5xl font-extrabold text-blue-800 mb-4"
-        >
-          Streamline Your Hostel & PG Operations
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0, y: 20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ delay: 0.2 }}
-          className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto"
-        >
-          The all-in-one hostel management system built for efficiency, clarity, and scale.
-        </motion.p>
-        <motion.a 
-          whileHover={{ scale: 1.05 }} 
-          href="#contact" 
-          className="inline-block mt-8 px-6 py-3 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition"
-        >
-          Contact Us <ArrowRight className="inline ml-2 h-5 w-5" />
-        </motion.a>
-      <div className="absolute top-6 right-6 flex gap-4">
-          <a href="/login" className="px-4 py-2 text-blue-600 border border-blue-600 rounded hover:bg-blue-600 hover:text-white transition">Login</a>
-          <a href="/signup" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Sign Up</a>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 60, rotate: side === 'left' ? -5 : 5 }}
+      animate={controls}
+      transition={{ duration: 1, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+function App() {
+  const particlesInit = async (engine) => {
+    await loadSlim(engine);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-gray-100 relative">
+      {/* Top Navbar */}
+      <nav className="w-full bg-black/80 backdrop-blur-lg py-4 px-6 flex justify-between items-center fixed top-0 left-0 z-50 border-b border-green-500/30">
+        <div className="flex items-center gap-4 group">
+          <img
+            className="h-12 w-12 object-contain transition-transform duration-300 group-hover:scale-110"
+            src="https://static.vecteezy.com/system/resources/previews/012/918/349/non_2x/building-management-outline-icon-design-illustration-internet-of-things-symbol-on-white-background-eps-10-file-vector.jpg"
+            alt="My Building Manager Logo"
+          />
+          <span className="text-xl font-black text-white relative transition-colors duration-300 group-hover:text-green-400">
+            My Building Management
+            <span className="absolute -bottom-1 left-0 w-0 h-1 bg-gradient-to-r from-green-400 to-green-600 rounded transition-all duration-300 group-hover:w-full"></span>
+          </span>
         </div>
-</header>
+        <a
+          href="/login"
+          className="px-8 py-3 text-green-400 border-2 border-green-500 rounded-full font-semibold text-lg hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 hover:text-white transition-all duration-300 shadow-lg hover:shadow-green-500/50 animate-pulse-slow"
+        >
+          Login
+        </a>
+      </nav>
+
+      {/* Hero Section */}
+<ScrollSection side="left">
+  <header className="pt-48 pb-32 px-4 max-w-7xl mx-auto relative overflow-hidden">
+    <Particles
+      id="tsparticles"
+      init={particlesInit}
+      options={{
+        particles: {
+          number: { value: 50, density: { enable: true, value_area: 800 } },
+          color: { value: '#4ade80' },
+          shape: { type: 'circle' },
+          opacity: { value: 0.5, random: true },
+          size: { value: 3, random: true },
+          move: { enable: true, speed: 0.5, direction: 'none', random: true, out_mode: 'out' },
+        },
+        interactivity: {
+          events: { onhover: { enable: true, mode: 'repulse' } },
+          modes: { repulse: { distance: 100, duration: 0.4 } },
+        },
+      }}
+      className="absolute inset-0 z-0"
+    />
+
+    <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-green-600/10 opacity-30"></div>
+
+    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+      {/* Hero Text */}
+      <div className="w-full md:w-1/2 text-center md:text-left space-y-6">
+        <motion.h1
+          className="text-5xl lg:text-7xl font-black text-white tracking-tight leading-tight"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.2 }}
+        >
+          Manage Your Building{' '}
+          <span className="block text-green-400 bg-clip-text bg-gradient-to-r from-green-400 to-green-600 animate-glow">
+            By Yourself
+          </span>
+        </motion.h1>
+        <motion.p
+          className="text-lg lg:text-xl text-gray-300 leading-relaxed font-medium"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 1 }}
+        >
+          Take control with our intuitive, all-in-one platform to streamline operations and boost efficiency.
+        </motion.p>
+        <motion.a
+          whileHover={{ scale: 1.15, boxShadow: '0 0 30px rgba(74, 222, 128, 0.7)' }}
+          whileTap={{ scale: 0.95 }}
+          href="#contact"
+          className="inline-block px-10 py-5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-xl font-semibold shadow-2xl hover:from-green-600 hover:to-green-700 transition-all duration-300 animate-pulse-slow"
+        >
+          Get Started <ArrowRight className="inline ml-3 h-7 w-7" />
+        </motion.a>
+      </div>
+
+      {/* Hero Image */}
+      <Tilt tiltMaxAngleX={10} tiltMaxAngleY={10} perspective={1000}>
+        <motion.div
+          className="w-full md:w-1/2 flex justify-center"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.3 }}
+        >
+          <img
+            src="https://www.sunsmart.co.in/wp-content/uploads/2015/11/property-software.png"
+            alt="Building Management Illustration"
+            className="w-full max-w-[500px] rounded-3xl shadow-2xl border-2 border-green-500/50 transition-transform duration-500"
+          />
+        </motion.div>
+      </Tilt>
+    </div>
+  </header>
+</ScrollSection>
+
+
+      {/* Wave Transition */}
+      <div className="relative h-16 bg-gradient-to-b from-black to-black/95 -mt-16 z-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent animate-wave"></div>
+      </div>
 
       {/* Why Buy Section */}
-      <section className="py-20 px-6 bg-white" data-aos="fade-up" data-aos-duration="800">
-        <div className="max-w-5xl mx-auto text-center">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }} 
-            className="text-3xl md:text-4xl font-bold text-blue-700 mb-6"
-          >
-            Why Choose HostelPro?
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }} 
-            viewport={{ once: true }} 
-            className="text-gray-600 max-w-3xl mx-auto text-lg mb-10"
-          >
-            HostelPro isn't just software — it's a daily operations assistant. From handling rent, food, visitors, complaints, to sending updates and automating everything — we simplify every part of your hostel or PG routine.
-          </motion.p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-left">
-            <div className="bg-blue-50 rounded-xl p-6 shadow">
-              <h3 className="text-lg font-bold text-blue-800 mb-2">📊 Complete Admin Control</h3>
-              <p className="text-sm text-gray-600">Manage residents, bills, complaints, and updates — all from one place.</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-6 shadow">
-              <h3 className="text-lg font-bold text-blue-800 mb-2">⚡ Saves Hours Daily</h3>
-              <p className="text-sm text-gray-600">Eliminate manual registers, confusion, and missed updates with automation.</p>
-            </div>
-            <div className="bg-blue-50 rounded-xl p-6 shadow">
-              <h3 className="text-lg font-bold text-blue-800 mb-2">📱 Works on Any Device</h3>
-              <p className="text-sm text-gray-600">Mobile-friendly UI ensures admins and wardens can manage tasks anywhere, anytime.</p>
+      <ScrollSection side="right">
+        <section className="py-64 px-6 bg-black/95 relative" style={{ background: 'radial-gradient(circle at right, rgba(74, 222, 128, 0.3), transparent 50%)' }}>
+          <div className="max-w-8xl mx-auto text-center">
+            <motion.h2
+              className="text-4xl md:text-5xl font-black text-white mb-12 tracking-tight"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1 }}
+            >
+              Why Choose My Building Manager?
+            </motion.h2>
+            <motion.p
+              className="text-gray-300 max-w-3xl mx-auto text-lg mb-16 leading-relaxed font-medium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 1 }}
+            >
+              My Building Manager simplifies daily operations with automation, from rent and utility tracking to resident communication and maintenance management.
+            </motion.p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+              {[
+                { title: '📊 Complete Admin Control', desc: 'Manage residents, bills, complaints, and updates seamlessly from a single dashboard.' },
+                { title: '⚡ Saves Hours Daily', desc: 'Automate manual tasks, eliminate errors, and stay updated with real-time insights.' },
+                { title: '📱 Works on Any Device', desc: 'Access and manage tasks from anywhere with our responsive, mobile-friendly interface.' },
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border-2 border-green-500/50 hover:border-green-500 transition-all duration-500 transform hover:scale-105 hover:rotate-2"
+                  whileHover={{ y: -10, boxShadow: '0 15px 40px rgba(74, 222, 128, 0.4)' }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.2, duration: 1 }}
+                >
+                  <h3 className="text-xl font-semibold text-green-400 mb-4 animate-glow">{item.title}</h3>
+                  <p className="text-gray-300 leading-relaxed font-medium">{item.desc}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollSection>
+
+      {/* Wave Transition */}
+      <div className="relative h-16 bg-gradient-to-b from-black/95 to-black -mt-16 z-20">
+        <div className="absolute inset-0 bg-gradient-to-l from-green-500/20 to-transparent animate-wave"></div>
+      </div>
 
       {/* Features Section */}
-      <section className="py-20 px-4 max-w-6xl mx-auto">
-        <motion.h2 
-          initial={{ opacity: 0 }} 
-          whileInView={{ opacity: 1 }} 
-          viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold text-center text-blue-700 mb-14"
-        >
-          Features That Make a Difference
-        </motion.h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" data-aos="fade-up" data-aos-delay="200">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-white shadow-xl rounded-2xl p-6 flex flex-col gap-3 hover:shadow-2xl transition"
+      <ScrollSection side="left">
+        <section className="py-64 px-4 max-w-8xl mx-auto relative" style={{ background: 'radial-gradient(circle at left, rgba(74, 222, 128, 0.3), transparent 50%)' }}>
+          <motion.h2
+            className="text-4xl md:text-5xl font-black text-center text-white mb-16 tracking-tight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            Features That Empower You
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 flex flex-col gap-5 border-2 border-green-500/50 hover:border-green-500 transition-all duration-500 transform hover:scale-105 hover:rotate-2"
+                whileHover={{ y: -10, boxShadow: '0 15px 40px rgba(74, 222, 128, 0.4)' }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.2, duration: 1 }}
+              >
+                <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
+                  <feature.icon className="h-14 w-14 text-green-400" />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-white animate-glow">{feature.title}</h3>
+                <p className="text-gray-300 leading-relaxed font-medium">{feature.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      </ScrollSection>
+
+      {/* Wave Transition */}
+      <div className="relative h-16 bg-gradient-to-b from-black to-black/95 -mt-16 z-20">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent animate-wave"></div>
+      </div>
+
+      {/* Contact Section */}
+      <ScrollSection side="right">
+        <section id="contact" className="bg-black/95 py-64 px-4 relative" style={{ background: 'radial-gradient(circle at right, rgba(74, 222, 128, 0.3), transparent 50%)' }}>
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.h2
+              className="text-4xl md:text-5xl font-black text-white mb-12 tracking-tight"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1 }}
             >
-              <feature.icon className="h-8 w-8 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-800">{feature.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{feature.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 px-6 bg-blue-50" data-aos="fade-up" data-aos-duration="800">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-blue-800 mb-10 transition-all duration-500 hover:text-blue-600">What Our Users Say</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-aos="fade-up" data-aos-delay="200">
-            <div className="bg-white shadow rounded-xl p-6 transition-transform duration-300 hover:scale-[1.03] hover:shadow-xl">
-              <p className="text-gray-700 italic mb-3">"HostelPro made managing our 100+ resident PG effortless. Rent collection and visitor tracking became 100% streamlined."</p>
-              <p className="text-blue-700 font-semibold">- Ankit Mehra, PG Owner</p>
+              Get in Touch
+            </motion.h2>
+            <motion.p
+              className="text-gray-300 mb-16 text-lg leading-relaxed font-medium"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 1 }}
+            >
+              Ready to streamline your building operations? Book a live demo or inquire about pricing today!
+            </motion.p>
+            <div className="flex flex-col sm:flex-row justify-center gap-16 text-left">
+              <motion.div
+                className="flex items-center gap-5 text-gray-300"
+                whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)' }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="p-3 bg-green-500/30 rounded-full">
+                  <Phone className="h-8 w-8 text-green-400 animate-spin-slow" />
+                </div>
+                <span className="font-medium text-lg">+91-98765-43210</span>
+              </motion.div>
+              <motion.div
+                className="flex items-center gap-5 text-gray-300"
+                whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(74, 222, 128, 0.3)' }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="p-3 bg-green-500/30 rounded-full">
+                  <Mail className="h-8 w-8 text-green-400 animate-spin-slow" />
+                </div>
+                <span className="font-medium text-lg">admin@hostelpro.in</span>
+              </motion.div>
             </div>
-            <div className="bg-white shadow rounded-xl p-6">
-              <p className="text-gray-700 italic mb-3">"From daily mess updates to student complaints — everything is so easy now. I don't use notebooks anymore!"</p>
-              <p className="text-blue-700 font-semibold">- Priya Sharma, Hostel Warden</p>
-            </div>
-            <div className="bg-white shadow rounded-xl p-6">
-              <p className="text-gray-700 italic mb-3">"Super mobile-friendly. I approve leaves, add visitors, and even resolve complaints on the go."</p>
-              <p className="text-blue-700 font-semibold">- Ramesh Patel, Admin Manager</p>
-            </div>
+            <motion.a
+              whileHover={{ scale: 1.15, boxShadow: '0 0 30px rgba(74, 222, 128, 0.7)' }}
+              whileTap={{ scale: 0.95 }}
+              href="mailto:admin@hostelpro.in"
+              className="mt-12 inline-block px-10 py-5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full text-xl font-semibold shadow-2xl hover:from-green-600 hover:to-green-700 transition-all duration-300 animate-pulse-slow"
+            >
+              Send Inquiry
+            </motion.a>
           </div>
-        </div>
-      </section>
-
-      {/* Demo Video Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-blue-800 mb-6">See It In Action</h2>
-          <p className="text-gray-600 mb-6">Watch how HostelPro simplifies hostel & PG operations with one dashboard.</p>
-          <div className="aspect-w-16 aspect-h-9">
-            <iframe className="rounded-xl w-full h-72 sm:h-96" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Demo Video" allowFullScreen></iframe>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Comparison Section */}
-      <section className="py-20 px-6 bg-blue-100" data-aos="fade-up" data-aos-duration="800">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-blue-800 mb-10">Simple & Transparent Pricing</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-            <div className="bg-white shadow-xl rounded-2xl p-6 transition-transform duration-300 hover:scale-[1.03] hover:shadow-2xl">
-              <h3 className="text-xl font-bold text-blue-700 mb-2 group-hover:text-blue-900 transition-colors duration-300">Basic</h3>
-              <p className="text-gray-600 mb-4">Perfect for small hostels or PGs (up to 50 residents)</p>
-              <ul className="text-sm text-gray-600 space-y-2 mb-4">
-                <li>✔ Room & Rent Management</li>
-                <li>✔ Complaint Tracker</li>
-                <li>✔ Email Support</li>
-              </ul>
-              <p className="text-lg font-bold text-blue-600">₹999/month</p>
-            </div>
-            <div className="bg-white shadow-2xl rounded-2xl p-6 border-2 border-blue-600">
-              <h3 className="text-xl font-bold text-blue-700 mb-2">Professional</h3>
-              <p className="text-gray-600 mb-4">Ideal for medium-size setups (50–150 residents)</p>
-              <ul className="text-sm text-gray-600 space-y-2 mb-4">
-                <li>✔ Everything in Basic</li>
-                <li>✔ Mess & Visitor Logs</li>
-                <li>✔ Leave & Outpass System</li>
-                <li>✔ WhatsApp Notifications</li>
-              </ul>
-              <p className="text-lg font-bold text-blue-600">₹1,999/month</p>
-            </div>
-            <div className="bg-white shadow-xl rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-blue-700 mb-2">Enterprise</h3>
-              <p className="text-gray-600 mb-4">For large hostels or PG chains (150+ residents)</p>
-              <ul className="text-sm text-gray-600 space-y-2 mb-4">
-                <li>✔ All Features Unlocked</li>
-                <li>✔ Dedicated Support</li>
-                <li>✔ Custom Integrations</li>
-              </ul>
-              <p className="text-lg font-bold text-blue-600">Contact for Quote</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section id="contact" className="bg-white py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-blue-800 mb-6">Get in Touch</h2>
-          <p className="text-gray-600 mb-8">Want to book a live demo or ask about pricing? We're ready to help you scale your hostel business.</p>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-6 text-left">
-            <div className="flex items-center gap-3 text-gray-700">
-              <Phone className="h-5 w-5 text-blue-600" />
-              <span className="font-medium">+91-98765-43210</span>
-            </div>
-            <div className="flex items-center gap-3 text-gray-700">
-              <Mail className="h-5 w-5 text-blue-600" />
-              <span className="font-medium">admin@hostelpro.in</span>
-            </div>
-          </div>
-
-          <a href="mailto:admin@hostelpro.in" className="mt-8 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition">
-            Send Inquiry
-          </a>
-        </div>
-      </section>
+        </section>
+      </ScrollSection>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-sm text-gray-500">
-        © {new Date().getFullYear()} HostelPro Software. All rights reserved.
+      <footer className="text-center py-12 text-sm text-gray-400 bg-black border-t border-green-500/30 relative z-10">
+        © {new Date().getFullYear()} My Building Manager. All rights reserved.
       </footer>
-
-      {/* Cookie Consent */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg px-4 py-3 z-50 text-center text-sm text-gray-700">
-        This website uses cookies for analytics and performance. By using this site, you agree to our use of cookies.
-        <button className="ml-4 px-4 py-1 text-white bg-blue-600 hover:bg-blue-700 rounded">Accept</button>
-      </div>
-
-      {/* Newsletter Section */}
-      <section className="py-16 px-6 bg-blue-50">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-blue-700 mb-4">Stay Updated</h2>
-          <p className="text-gray-600 mb-6">Subscribe to our newsletter for product updates, offers, and tips on managing your hostel or PG better.</p>
-          <form action="https://your-mailchimp-endpoint-url" method="POST" target="_blank" className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <input
-              type="email"
-              name="EMAIL"
-              placeholder="Enter your email"
-              className="w-full sm:w-auto flex-1 px-4 py-2 border rounded-lg text-gray-700"
-              required
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Subscribe
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {/* Analytics Script */}
-      <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-      <script dangerouslySetInnerHTML={{ __html: `
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
-      ` }} />
-
-      {/* Live Chat Widget */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <a
-          href="https://wa.me/919876543210"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-green-500 text-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-green-600 transition"
-        >
-          💬 Live Chat
-        </a>
-      </div>
-
-      {/* FAQ Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-blue-800 mb-10">Frequently Asked Questions</h2>
-          <div className="space-y-6">
-            <div className="border p-4 rounded-xl shadow transition-all duration-300 hover:shadow-md hover:scale-[1.02]">
-              <h3 className="text-lg font-semibold text-blue-700">Do I need technical knowledge to use this software?</h3>
-              <p className="text-gray-600 mt-2">Not at all! The interface is user-friendly and designed for admins, wardens, and owners with minimal tech skills.</p>
-            </div>
-            <div className="border p-4 rounded-xl shadow">
-              <h3 className="text-lg font-semibold text-blue-700">Can I use this for multiple hostels?</h3>
-              <p className="text-gray-600 mt-2">Yes, our software supports multi-location management with different admin logins per branch.</p>
-            </div>
-            <div className="border p-4 rounded-xl shadow">
-              <h3 className="text-lg font-semibold text-blue-700">Is my data secure?</h3>
-              <p className="text-gray-600 mt-2">Absolutely. We use secure servers and encryption to protect all your hostel and resident data.</p>
-            </div>
-            <div className="border p-4 rounded-xl shadow">
-              <h3 className="text-lg font-semibold text-blue-700">Can I try it before I buy?</h3>
-              <p className="text-gray-600 mt-2">Yes, contact us for a free demo. We'll walk you through everything live.</p>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
+
+export default App;
